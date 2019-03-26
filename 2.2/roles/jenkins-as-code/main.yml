@@ -1,0 +1,12 @@
+---
+#based on https://github.com/softasap/sa-box-jenkins
+
+- name: 'Jenkins'
+
+  vars_prompt:
+    selected_hosts: Specify the hosts to provision
+
+  hosts: "{{ selected_hosts }}"
+
+  roles:
+    - '.'

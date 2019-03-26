@@ -1,0 +1,44 @@
+---
+jks_repo_url: http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
+jks_repo_path: /etc/yum.repos.d/jenkins.repo
+jks_rpm_key: https://jenkins-ci.org/redhat/jenkins-ci.org.key
+java_version: 1.8.0
+java_package: "java-{{ java_version }}-openjdk.x86_64"
+jks_init_config: /etc/sysconfig/jenkins
+jks_java_args: "-Djava.awt.headless=true -Djenkins.install.runSetupWizard=false"
+jks_admin_user: admin
+jenkins_plugins:
+  - git
+  - junit
+  - matrix-auth
+  - matrix-project
+  - rebuild
+  - gitlab-plugin
+  - htmlpublisher
+  - mattermost
+  - job-dsl
+  - ldap
+  - workflow-aggregator
+  - cloudfoundry 
+  - kubernetes
+  - configuration-as-code
+  - configuration-as-code-support
+  - blueocean
+jks_admin_ldap_users:
+  - admin
+job_name: "main-job"
+uuid_regexp: '^(.*)<a tooltip="{{ item }}" href="credential/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})" class=(.*)$'
+uuid_match: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+jks_credentials:
+  - admin
+jks_job:
+  name: "main-job"
+  repo: "git@repo"
+  user: "admin"
+ldap_server_port: "ldap.local:389"
+k8s_cloud_name: "k8s-cloud"
+k8s_server_url: "https://172.16.0.121"
+k8s_namespace: "jenkins"
+jenkins_server_url: "http://172.16.0.20:8080/"
+k8s_admin_user: "jenkins"
+k8s_admin_pass: "jenkins_password"

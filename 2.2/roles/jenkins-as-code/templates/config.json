@@ -1,0 +1,76 @@
+{
+   "useSecurity":{
+      "slaveAgentPort":{
+         "value":"",
+         "type":"disable"
+      },
+      "realm":{
+         "value":"2",
+         "$class":"hudson.security.LDAPSecurityRealm",
+         "server":"{{ ldap_server_port }}",
+         "rootDN":"dc=local,dc=localdomain",
+         "userSearchBase":"ou=users",
+      },
+      "authorization":{
+         "value":"4",
+         "$class":"hudson.security.ProjectMatrixAuthorizationStrategy",
+         "data":{
+         {% for user in jks_admin_ldap_users  %}
+            "{{ user }}":{
+               "hudson.model.Hudson.Administer":true,
+               "hudson.model.Hudson.ConfigureUpdateCenter":true,
+               "hudson.model.Hudson.Read":true,
+               "hudson.model.Hudson.RunScripts":true,
+               "hudson.model.Hudson.UploadPlugins":true,
+               "com.cloudbees.plugins.credentials.CredentialsProvider.Create":true,
+               "com.cloudbees.plugins.credentials.CredentialsProvider.Delete":true,
+               "com.cloudbees.plugins.credentials.CredentialsProvider.ManageDomains":true,
+               "com.cloudbees.plugins.credentials.CredentialsProvider.Update":true,
+               "com.cloudbees.plugins.credentials.CredentialsProvider.View":true,
+               "hudson.model.Computer.Build":true,
+               "hudson.model.Computer.Configure":true,
+               "hudson.model.Computer.Connect":true,
+               "hudson.model.Computer.Create":true,
+               "hudson.model.Computer.Delete":true,
+               "hudson.model.Computer.Disconnect":true,
+               "hudson.model.Item.Build":true,
+               "hudson.model.Item.Cancel":true,
+               "hudson.model.Item.Configure":true,
+               "hudson.model.Item.Create":true,
+               "hudson.model.Item.Delete":true,
+               "hudson.model.Item.Discover":true,
+               "hudson.model.Item.Move":false,
+               "hudson.model.Item.Read":true,
+               "hudson.model.Item.Workspace":true,
+               "hudson.model.Run.Delete":true,
+               "hudson.model.Run.Replay":false,
+               "hudson.model.Run.Update":true,
+               "hudson.model.View.Configure":true,
+               "hudson.model.View.Create":true,
+               "hudson.model.View.Delete":true,
+               "hudson.model.View.Read":true,
+               "hudson.scm.SCM.Tag":true
+            },
+         {% endfor %}
+            "anonymous":{
+               "hudson.model.Hudson.Administer":false
+            }
+         }
+      }
+   },
+   "hudson-security-csrf-GlobalCrumbIssuerConfiguration":{
+      "csrf":{
+         "issuer":{
+            "value":"0",
+            "$class":"hudson.security.csrf.DefaultCrumbIssuer",
+            "excludeClientIPFromCrumb":false
+         }
+      }
+   },
+   "jenkins-security-s2m-MasterKillSwitchConfiguration":{
+      "masterToSlaveAccessControl":{
+
+      }
+   },
+   "{{ crumb_token.json.crumbRequestField }}": "{{ crumb_token.json.crumb }}"
+}

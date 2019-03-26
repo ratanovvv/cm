@@ -1,0 +1,68 @@
+---
+- include: wait_jenkins.yml
+
+- include_vars: vault.yml
+- name: Jenkins | Check first time install
+  command: test -e /var/lib/jenkins/secrets/initialAdminPassword
+  ignore_errors: yes
+  register: jenkins_second_time_install
+
+- name: Jenkins | Supress wizard mode
+  lineinfile: 
+    dest: "{{ jks_init_config }}"
+    insertbefore: "^JENKINS_ARGS.*"
+    line: "JAVA_ARGS=\"{{ jks_java_args }}\""
+  when: jenkins_second_time_install|succeeded
+
+- name: Jenkins | Remove initial Jenkins password
+  file:
+    name: /var/lib/jenkins/secrets/initialAdminPassword
+    state: absent
+  ignore_errors: yes
+  when: jenkins_second_time_install|succeeded
+
+- name: Debug | jenkins_second_time_install
+  shell: "echo {{ jenkins_second_time_install }}"
+
+- name: Jenkins | Create Jenkins admin password hash
+  shell: "echo -n \"{{ jenkins_admin_password }}{ansible_jenkins}\" | sha256sum - | awk '{ print $1; }'"
+  when: jenkins_second_time_install|succeeded
+  register: jenkins_password_hash
+
+- name: Jenkins | Patch original password hash line
+  lineinfile: 
+    dest: "/var/lib/jenkins/users/admin/config.xml"
+    regexp: '^(\s)*<passwordHash>(.*)'
+    line: '      <passwordHash>ansible_jenkins:{{ jenkins_password_hash.stdout }}</passwordHash>'
+    owner: "jenkins"
+  when: jenkins_second_time_install|succeeded
+
+- name: Jenkins | Forced restart
+  service: name=jenkins state=restarted
+  when: jenkins_second_time_install|succeeded
+
+- include: wait_jenkins.yml
+
+- name: Jenkins | Get Jenkins crumb
+  uri:
+    user: "{{ item.key }}"
+    password: "{{ item.value }}"
+    force_basic_auth: yes
+    url: "http://127.0.0.1:8080/crumbIssuer/api/json"
+    return_content: yes
+  register: crumb_token_list
+  until: crumb_token_list.content.find('Please wait while Jenkins is getting ready') == -1
+  retries: 10
+  delay: 5
+  with_dict: "{{ jenkins_admin }}"
+  ignore_errors: true
+
+- name: Get crumb token
+  set_fact:
+    crumb_token: "{{ item }}"
+  when: item.status == 200
+  with_items: "{{ crumb_token_list.results }}"
+
+- name: Set crumb token
+  set_fact:
+    jenkins_crumb_token: "{{ crumb_token.json.crumbRequestField }}={{ crumb_token.json.crumb }}"

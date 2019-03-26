@@ -1,0 +1,16 @@
+---
+
+- set_fact:
+    _config_json: "{{ lookup('template', 'templates/config.json', convert_data=False)|replace('\n','') }}"
+
+- name: Set Config
+  uri:
+    url: http://127.0.0.1:8080/configureSecurity/configure
+    method: POST
+    user: "{{ crumb_token.item.key }}"
+    password: "{{ crumb_token.item.value }}"
+    force_basic_auth: yes
+    headers: >
+      "{{ jenkins_crumb_token }}" "Content-Type=application/x-www-form-urlencoded"
+    body: 'json={{ _config_json|to_json }}'
+    status_code: 302

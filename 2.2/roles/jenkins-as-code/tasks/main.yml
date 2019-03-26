@@ -1,0 +1,17 @@
+---
+
+- include: install.yml
+
+- include: initial_config.yml
+
+- include: plugins.yml
+
+- include: wait_jenkins.yml
+
+- include: credentials.yml
+
+#- include: job.yml
+
+- include: jcasc_config.yml
+
+#- include: config.yml

@@ -1,0 +1,22 @@
+---
+
+- template:
+    src: jcasc.yaml
+    dest: /var/lib/jenkins/jcasc.yaml
+
+- set_fact:
+    _jcasc_json: "{\"newSource\": \"/var/lib/jenkins/jcasc.yaml\",\"Jenkins-Crumb\": \"{{ crumb_token.json.crumb }}\"}"
+
+- name: JCasC
+  uri:
+    # url: http://127.0.0.1:8080/view/All/createItem
+    url: http://127.0.0.1:8080/configuration-as-code/replace
+    method: POST
+    user: "{{ crumb_token.item.key }}"
+    password: "{{ crumb_token.item.value }}"
+    force_basic_auth: yes
+    headers: >
+      "{{ jenkins_crumb_token }}" "Content-Type=application/x-www-form-urlencoded"
+    # body: "json={{ _jcasc_json|to_json }}"
+    body: "_.newSource=/var/lib/jenkins/jcasc.yaml&Jenkins-Crumb={{ jenkins_crumb_token }}&json={{ _jcasc_json|to_json }}&replace=Apply+New+configuration"
+    status_code: 302

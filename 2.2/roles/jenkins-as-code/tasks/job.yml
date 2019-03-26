@@ -1,0 +1,34 @@
+---
+
+- set_fact:
+    _job_json: "{{ lookup('template', 'templates/job.json', convert_data=False)|replace('\n','')|string }}"
+
+- set_fact:
+    _job_content_json: "{{ lookup('template', 'templates/job_config.json')|replace('\n','\\n')|string }}"
+
+- name: Add seed job
+  uri:
+    url: http://127.0.0.1:8080/view/All/createItem
+    method: POST
+    user: "{{ crumb_token.item.key }}"
+    password: "{{ crumb_token.item.value }}"
+    force_basic_auth: yes
+    headers: >
+      "{{ jenkins_crumb_token }}" "Content-Type=application/x-www-form-urlencoded"
+    body: "name=main-job&mode=hudson.model.FreeStyleProject&json={{ _job_json }}"
+    status_code: 302
+  ignore_errors: true
+
+- name: Config seed job
+  uri:
+    url: http://127.0.0.1:8080/job/main-job/configSubmit
+    method: POST
+    user: "{{ crumb_token.item.key }}"
+    password: "{{ crumb_token.item.value }}"
+    force_basic_auth: yes
+    headers: >
+      "{{ jenkins_crumb_token }}" "Content-Type=application/x-www-form-urlencoded"
+    body: 'name=main-job&hudson-triggers-SCMTrigger=on&json={{ _job_content_json|to_json }}'
+    status_code: 302
+  when: jks_job.user == item.key
+  with_dict: "{{ _uuid_substr }}"

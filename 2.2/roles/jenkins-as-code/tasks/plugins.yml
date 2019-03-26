@@ -1,0 +1,73 @@
+- name: Jenkins | Create Jenkins updates folder.
+  file:
+    path: /var/lib/jenkins/updates
+    owner: jenkins
+    group: jenkins
+    mode: 0755
+    state: directory
+  become: yes
+
+- name: Jenkins | Update Jenkins plugin data.
+  shell: >
+    curl -L https://updates.jenkins-ci.org/update-center.json | sed '1d;$d' > /var/lib/jenkins/updates/default.json
+    creates=/var/lib/jenkins/updates/default.json
+  become: yes
+
+
+- name: Jenkins | Permissions for default.json updates info.
+  file:
+    path: /var/lib/jenkins/updates/default.json
+    owner: jenkins
+    group: jenkins
+    mode: 0755
+  become: yes
+
+- wait_for: port=8080
+
+- name: Jenkins | Get installed plugins
+  uri:
+    user: "{{ crumb_token.item.key }}"
+    password: "{{ crumb_token.item.value }}"
+    force_basic_auth: yes
+    url: "http://127.0.0.1:8080/pluginManager/api/json?tree=plugins[shortName]&{{ jenkins_crumb_token }}"
+    return_content: yes
+  register: jenkins_installed_plugins
+
+- name: Jenkins | Install plugins
+  uri:
+    user: "{{ crumb_token.item.key }}"
+    password: "{{ crumb_token.item.value }}"
+    force_basic_auth: yes
+    url: "http://127.0.0.1:8080/pluginManager/install?plugin.{{ item }}.default=on&{{ jenkins_crumb_token }}"
+    method: POST
+    status_code: [200, 302]
+  when: item not in jenkins_installed_plugins.json.plugins|map(attribute='shortName')|list
+  with_items: "{{ jenkins_plugins }}"
+
+- name: Jenkins | Wait for plugins to be installed
+  uri:
+    user: "{{ crumb_token.item.key }}"
+    password: "{{ crumb_token.item.value }}"
+    force_basic_auth: yes
+    url: "http://127.0.0.1:8080/updateCenter/installStatus?{{ jenkins_crumb_token }}"
+    return_content: yes
+  register: jenkins_plugin_status
+  until: "'Pending' not in jenkins_plugin_status.json.data.jobs|map(attribute='installStatus')"
+  retries: 60
+  delay: 20
+
+- name: Jenkins | Check if we need to restart Jenkins to activate plugins
+  uri:
+    user: "{{ crumb_token.item.key }}"
+    password: "{{ crumb_token.item.value }}"
+    force_basic_auth: yes
+    url: > 
+      {{ "http://127.0.0.1:8080/updateCenter/api/json" +
+      "?tree=restartRequiredForCompletion&" +
+      jenkins_crumb_token }}
+    return_content: yes
+  register: jenkins_restart_required
+
+- name: Jenkins | Restart Jenkins to activate new plugins
+  service: name=jenkins state=restarted
+  when: jenkins_restart_required.json.restartRequiredForCompletion|bool

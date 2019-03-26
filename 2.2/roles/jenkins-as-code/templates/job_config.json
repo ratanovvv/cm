@@ -1,0 +1,24 @@
+{
+    "name":"{{ jks_job.repo }}",
+    "scm": {
+        "value": "1",
+        "$class": "hudson.plugins.git.GitSCM",
+        "stapler-class": "hudson.plugins.git.GitSCM",
+        "userRemoteConfigs": {
+            "url": "{{ jks_job.repo }}",
+            "credentialsId": "{% raw %}{{ item.value }}{% endraw %}",
+            "name": "",
+            "refspec": ""
+        }
+    },
+    "hudson-triggers-SCMTrigger": {
+        "scmpoll_spec": "H/20 * * * *",
+        "ignorePostCommitHooks": false
+    },
+    "builder": {
+        "useScriptText": "false",
+        "targets": "*.groovy",
+        "$class": "javaposse.jobdsl.plugin.ExecuteDslScripts"
+    },
+    "{{ crumb_token.json.crumbRequestField }}": "{{ crumb_token.json.crumb }}"
+}

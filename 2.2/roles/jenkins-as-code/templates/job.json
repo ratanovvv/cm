@@ -1,0 +1,5 @@
+{
+    "name":"{{ job_name }}",
+    "mode": "hudson.model.FreeStyleProject",
+    "{{ crumb_token.json.crumbRequestField }}": "{{ crumb_token.json.crumb }}"
+}

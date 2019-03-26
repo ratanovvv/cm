@@ -1,0 +1,9 @@
+---
+
+- name: Wait until Jenkins is up
+  uri:
+    url: "http://127.0.0.1:8080/login"
+  register: result
+  until: result['status']|default(0) == 200
+  retries: 10
+  delay: 5

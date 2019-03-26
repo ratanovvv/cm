@@ -1,0 +1,18 @@
+{
+    "": "0",
+    "credentials":
+    {
+        "scope": "GLOBAL",
+        "id": "",
+        "description": "{{ item.key }}",
+        "username": "{{ item.key }}",
+        "passphrase": "",
+        "privateKeySource":
+        {
+            "privateKey": "{% raw %}{{ lookup('file', 'files/{% endraw %}{{ item.value }}{% raw %}')|replace('+', '%2B') }}{% endraw %}",
+            "$class": "com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey$DirectEntryPrivateKeySource"
+        },
+        "$class": "com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey"
+    },
+    "{{ crumb_token.json.crumbRequestField }}": "{{ crumb_token.json.crumb }}"
+}

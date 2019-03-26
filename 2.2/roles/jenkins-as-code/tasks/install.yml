@@ -1,0 +1,30 @@
+---
+- name: install selinux bindings
+  yum: name=libselinux-python state=present
+
+- name: Install ca-certificate
+  yum: name=ca-certificates state=present
+
+- name: Install curl
+  yum: name=curl state=present
+
+- name: Install git
+  yum: name=git state=present
+
+- name: Installs java
+  yum: "name={{ java_package }} state=present"
+
+- name: Jenkins | Get repo
+  get_url: "url={{ jks_repo_url }} dest={{ jks_repo_path }}"
+
+- name: Jenkins | Installing GPG key
+  rpm_key: "state=present key={{ jks_rpm_key }}"
+
+- name: Jenkins | Install
+  yum: name=jenkins state=present
+
+- name: Enable Jenkins Service
+  systemd:
+    name: jenkins
+    state: started
+    enabled: True
